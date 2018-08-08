@@ -1,5 +1,11 @@
 ﻿using System.Threading.Tasks;
 using System.Net.Http;
+using Polly.Timeout;
+using Polly;
+using System;
+using System.Threading;
+using Polly.Retry;
+using Polly.Extensions.Http;
 
 namespace PollyTest
 {

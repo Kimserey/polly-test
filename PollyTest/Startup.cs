@@ -11,6 +11,7 @@ using Microsoft.Extensions.Http;
 using Polly;
 using System.Net.Http;
 using Polly.Extensions.Http;
+using Polly.Timeout;
 
 namespace PollyTest
 {
@@ -18,11 +19,14 @@ namespace PollyTest
     {
         static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
         {
-            // Handle 5.x.x and 408 timeout response and retry 5 time with an exponential waiting time.
-            return HttpPolicyExtensions
-                .HandleTransientHttpError()
-                .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
-                .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+            // Handle 5.x.x, 408 timeout, 404 not found and timeout rejection from client and retry 5 time with an exponential waiting time.
+            return
+                HttpPolicyExtensions
+                    .HandleTransientHttpError()
+                    .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    .Or<TimeoutRejectedException>()
+                    .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)))
+                    .WrapAsync(Policy.TimeoutAsync(TimeSpan.FromSeconds(1), TimeoutStrategy.Optimistic));
         }
 
         public void ConfigureServices(IServiceCollection services)

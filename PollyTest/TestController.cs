@@ -19,15 +19,8 @@ namespace PollyTest
         [HttpGet("timeout")]
         public async Task<ActionResult> GetTimeout()
         {
-            try
-            {
-                var timeout = await _client.GetTimeout();
-                return Ok(timeout);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var timeout = await _client.GetTimeout();
+            return Ok(timeout);
         }
 
         [HttpGet("retry")]
