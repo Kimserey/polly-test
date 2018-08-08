@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -8,26 +9,41 @@ namespace PollyTest
     [Route("test")]
     public class TestController : ControllerBase
     {
-        private readonly IHttpClientFactory _clientFactory;
+        private readonly IApiClient _client;
 
-        public TestController(IHttpClientFactory clientFactory)
+        public TestController(IApiClient client)
         {
-            _clientFactory = clientFactory;
+            _client = client;
         }
 
         [HttpGet("timeout")]
         public async Task<ActionResult> GetTimeout()
         {
-            var client = _clientFactory.CreateClient();
-            var timeout = await client.GetAsync("http://localhost:5100/test/five-seconds");
-            return Ok(timeout);
+            try
+            {
+                var timeout = await _client.GetTimeout();
+                return Ok(timeout);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("retry")]
-        public ActionResult GetRetry()
+        public async Task<ActionResult> GetRetry()
         {
-            return Ok();
+            var exception = await _client.GetException();
+            return Ok(exception);
         }
+
+        [HttpGet("not-found")]
+        public async Task<ActionResult> GetNotFound()
+        {
+            var exception = await _client.GetNotFound();
+            return Ok(exception);
+        }
+
 
         [HttpGet("circuit-breaker")]
         public ActionResult GetCircuitBreaker()

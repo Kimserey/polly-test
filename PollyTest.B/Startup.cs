@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -19,13 +20,12 @@ namespace PollyTest.B
         public ActionResult<string> FiveSeconds()
         {
             Thread.Sleep(5000);
-            return "Hello World! From B";
+            return Ok();
         }
 
         [HttpGet("exception")]
         public ActionResult Exception()
         {
-            Thread.Sleep(2000);
             throw new NotImplementedException("This is not implemented");
         }
     }
