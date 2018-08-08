@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace PollyTest
 {
@@ -6,10 +8,19 @@ namespace PollyTest
     [Route("test")]
     public class TestController : ControllerBase
     {
-        [HttpGet("timeout")]
-        public ActionResult GetTimeout()
+        private readonly IHttpClientFactory _clientFactory;
+
+        public TestController(IHttpClientFactory clientFactory)
         {
-            return Ok();
+            _clientFactory = clientFactory;
+        }
+
+        [HttpGet("timeout")]
+        public async Task<ActionResult> GetTimeout()
+        {
+            var client = _clientFactory.CreateClient();
+            var timeout = await client.GetAsync("http://localhost:5100/test/five-seconds");
+            return Ok(timeout);
         }
 
         [HttpGet("retry")]

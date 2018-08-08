@@ -1,23 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace PollyTest.B
 {
-    public class Startup
+    [ApiController]
+    [Route("test")]
+    public class TestController : ControllerBase
     {
-        // This method gets called by the runtime. Use this method to add services to the container.
-        // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
-        public void ConfigureServices(IServiceCollection services)
+        [HttpGet("five-seconds")]
+        public ActionResult<string> FiveSeconds()
         {
+            Thread.Sleep(5000);
+            return "Hello World! From B";
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        [HttpGet("exception")]
+        public ActionResult Exception()
+        {
+            Thread.Sleep(2000);
+            throw new NotImplementedException("This is not implemented");
+        }
+    }
+
+    public class Startup
+    {
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+        }
+
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
@@ -25,10 +44,7 @@ namespace PollyTest.B
                 app.UseDeveloperExceptionPage();
             }
 
-            app.Run(async (context) =>
-            {
-                await context.Response.WriteAsync("Hello World!");
-            });
+            app.UseMvc();
         }
     }
 }
