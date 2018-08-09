@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.Extensions.Http;
+using Polly;
+using System.Net.Http;
 
 namespace PollyTest
 {
@@ -22,13 +24,26 @@ namespace PollyTest
                 {
                     opts.BaseAddress = new Uri("http://localhost:5100");
                 })
-                .AddPolicyHandler(PolicyHandler.WaitAndRetry)
+                .AddPolicyHandler(PolicyHandler.WaitAndRetry(OnFailure))
                 .AddPolicyHandler(PolicyHandler.Timeout);
 
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
             });
+        }
+
+        private void OnFailure(DelegateResult<HttpResponseMessage> result, TimeSpan time)
+        {
+            if (result?.Exception != null)
+            {
+                Console.WriteLine("Exception occured: {0}, Time: {1}", result.Exception.Message, time);
+            }
+
+            if (result?.Result != null)
+            {
+                Console.WriteLine("Http error handled - Reason:{0} / Status Code:{1:d}, Time: {2}", result.Result.ReasonPhrase, result.Result.StatusCode, time);
+            }
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
