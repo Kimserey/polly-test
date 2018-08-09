@@ -8,27 +8,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.Extensions.Http;
-using Polly;
-using System.Net.Http;
-using Polly.Extensions.Http;
-using Polly.Timeout;
 
 namespace PollyTest
 {
     public class Startup
     {
-        static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-        {
-            // Handle 5.x.x, 408 timeout, 404 not found and timeout rejection from client and retry 5 time with an exponential waiting time.
-            return
-                HttpPolicyExtensions
-                    .HandleTransientHttpError()
-                    .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
-                    .Or<TimeoutRejectedException>()
-                    .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)))
-                    .WrapAsync(Policy.TimeoutAsync(TimeSpan.FromSeconds(1), TimeoutStrategy.Optimistic));
-        }
-
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
@@ -38,7 +22,8 @@ namespace PollyTest
                 {
                     opts.BaseAddress = new Uri("http://localhost:5100");
                 })
-                .AddPolicyHandler(GetRetryPolicy());
+                .AddPolicyHandler(PolicyHandler.WaitAndRetry)
+                .AddPolicyHandler(PolicyHandler.Timeout);
 
             services.AddSwaggerGen(c =>
             {
